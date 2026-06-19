@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Python with WASM</title>
+        <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    </head>
+    <body>
+        <h1>Run Python in the Browser with WASM</h1>
+        <div class="mb-3">
+            <label for="exampleFormControlTextarea1" class="form-label">Enter in code below</label>
+            <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+        </div>
+        <button id="run-python" class="btn btn-primary" class="btn btn-primary">Run Python Code</button>
+        <pre id="output"></pre>
+
+        <script>
+            let pyodide = null;
+
+            // Load Pyodide once on page load, not on every button click
+            async function initPyodide() {
+                pyodide = await loadPyodide();
+            }
+
+            async function runPython() {
+                const output = document.getElementById("output");
+                
+                if (!pyodide) {
+                    output.textContent = "Pyodide is still loading, please wait...";
+                    return;
+                }
+
+                let pythonCode = document.getElementById("exampleFormControlTextarea1").value;
+                
+                // Redirect Python's stdout so print() output is captured
+                pyodide.runPython(`
+                    import sys
+                    import io
+                    sys.stdout = io.StringIO()
+                `);
+
+                try {
+                    let result = pyodide.runPython(pythonCode);
+
+                    // Grab anything written to stdout (e.g. via print())
+                    const stdout = pyodide.runPython("sys.stdout.getvalue()");
+
+                    if (stdout) {
+                        output.textContent = stdout;
+                    } else if (result !== undefined) {
+                        // Fall back to the return value of the last expression
+                        output.textContent = result;
+                    } else {
+                        output.textContent = "(no output)";
+                    }
+                } catch (err) {
+                    output.textContent = "Error: " + err.message;
+                }
+            }
+
+            document.getElementById("run-python").addEventListener("click", runPython);
+            initPyodide();
+        </script>
+    </body>
+</html>
