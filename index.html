@@ -10,12 +10,41 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.0/min/vs/loader.min.js"></script>
         <style>
             #editor { width: 100%; height: 500px; border: 1px solid #ccc; }
+            #toolbar { display: flex; align-items: center; gap: 4px; background: #2d2d2d; padding: 4px 8px; }
+            #toolbar button {
+                background: #3c3c3c;
+                color: #d4d4d4;
+                border: none;
+                padding: 4px 10px;
+                border-radius: 3px;
+                cursor: pointer;
+                font-size: 13px;
+            }
+
+            #toolbar button:hover {
+                background: #505050;
+            }
+
+            separator {
+                color: #555;
+                padding: 0 4px;
+                user-select: none;
+            }
         </style>
     </head>
     <body>
         <h1>Run Python in the Browser with WASM</h1>
+        <div id="toolbar">
+            <button onclick="editorAction('undo')">Undo</button>
+            <button onclick="editorAction('redo')">Redo</button>
+            <separator>|</separator>
+            <button onclick="editorAction('cut')">Cut</button>
+            <button onclick="editorAction('copy')">Copy</button>
+            <button onclick="editorAction('paste')">Paste</button>
+            <separator>|</separator>
+            <button onclick="runPython()">Run</button>
+        </div>
         <div id="editor"></div>
-        <button id="run-python" class="btn btn-primary" class="btn btn-primary">Run Python Code</button>
         <pre id="output"></pre>
         <script>
             let editor, pyodide;
@@ -85,7 +114,27 @@
                 }
             }
 
-            document.getElementById("run-python").addEventListener("click", runPython);
+            function editorAction(action) {
+                editor.focus();
+                switch (action) {
+                    case 'undo':
+                        editor.trigger('toolbar', 'undo', null);
+                        break;
+                    case 'redo':
+                        editor.trigger('toolbar', 'redo', null);
+                        break;
+                    case 'cut':
+                        editor.trigger('toolbar', 'editor.action.clipboardCutAction', null);
+                        break;
+                    case 'copy':
+                        editor.trigger('toolbar', 'editor.action.clipboardCopyAction', null);
+                        break;
+                    case 'paste':
+                        editor.trigger('toolbar', 'editor.action.clipboardPasteAction', null);
+                        break;
+                }
+            }
+
             initPyodide();
         </script>
     </body>
